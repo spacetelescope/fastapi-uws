@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastapi-uws"
+version = "0.1.0"
+authors = [
+    {name = "Joshua Fraustro", email="jfraustro@stsci.edu"},
+]
+description = "FastAPI implementation of the IVOA UWS pattern"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi",
+    ]
+
+classifiers = [
+
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+
+    "License :: OSI Approved :: MIT License",
+]
+keywords = [
+    "ivoa",
+    "fastapi",
+    "uws",
+    ]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+dev = ["pylint", "ruff", "pre-commit"]
+docs = ["sphinx", "sphinx_design", "furo", "sphinx-copybutton", "toml", "sphinx_autodoc_typehints"]
+
+[project.urls]
+Homepage = "https://github.com/spacetelescope/fastapi-uws"
+Issues = "https://github.com/spacetelescope/fastapi-uws/issues"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["docs/conf.py"]
