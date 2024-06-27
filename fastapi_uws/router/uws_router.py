@@ -36,6 +36,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def delete_job(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> None:
         uws_service.delete_job(job_id)
@@ -53,6 +54,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_destruction(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
         return uws_service.get_job_value(job_id, "destruction")
@@ -69,6 +71,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_error_summary(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> ErrorSummary:
         return uws_service.get_job_value(job_id, "error_summary")
@@ -85,6 +88,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_execution_duration(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> int:
         return uws_service.get_job_value(job_id, "execution_duration")
@@ -101,6 +105,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_list(
+        self,
         phase: list[ExecutionPhase] = Query(
             None, description="Execution phase of the job to filter for", alias="PHASE"
         ),
@@ -121,6 +126,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_owner(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> str:
         return uws_service.get_job_value(job_id, "owner_id")
@@ -137,6 +143,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_parameters(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> Parameters:
         return uws_service.get_job_value(job_id, "parameters")
@@ -153,6 +160,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_phase(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> ExecutionPhase:
         return uws_service.get_job_value(job_id, "phase")
@@ -169,6 +177,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_quote(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
         return uws_service.get_job_value(job_id, "quote")
@@ -185,6 +194,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_results(
+        self,
         job_id: str = Path(..., description="Job ID"),
     ) -> Results:
         return uws_service.get_job_value(job_id, "results")
@@ -201,6 +211,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def get_job_summary(
+        self,
         job_id: str = Path(..., description="Job ID"),
         phase: ExecutionPhase = Query(None, description="Phase of the job to poll for", alias="PHASE"),
         wait: int = Query(None, description="Maximum time to wait for the job to change phases.", alias="WAIT", ge=-1),
@@ -219,12 +230,14 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_create_job(
+        self,
         create_job_request: CreateJobRequest = Body(None, description="Initial job values"),
     ) -> None:
-        parameters = create_job_request.parameters
+        parameters = create_job_request.parameter
         owner_id = create_job_request.owner_id
         run_id = create_job_request.run_id
-        uws_service.create_job(parameters, run_id, owner_id)
+        job_id = uws_service.create_job(parameters, run_id, owner_id)
+        return RedirectResponse(status_code=303, url=f"/uws/{job_id}")
 
     @uws_router.post(
         "/uws/{job_id}",
@@ -238,6 +251,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_update_job(
+        self,
         job_id: str = Path(..., description="Job ID"),
         update_job_request: UpdateJobRequest = Body(None, description="Values to update"),
     ) -> None:
@@ -259,6 +273,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_update_job_destruction(
+        self,
         job_id: str = Path(..., description="Job ID"),
         post_update_job_destruction_request: UpdateJobDestructionRequest = Body(
             None, description="Destruction time to update"
@@ -279,6 +294,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_update_job_execution_duration(
+        self,
         job_id: str = Path(..., description="Job ID"),
         post_update_job_execution_duration_request: UpdateJobExecutionDurationRequest = Body(
             None, description="Execution duration to update"
@@ -301,6 +317,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_update_job_parameters(
+        self,
         job_id: str = Path(..., description="Job ID"),
         parameters: Parameters = Body(None, description="Parameters to update"),
     ) -> None:
@@ -319,6 +336,7 @@ class UWSAPIRouter:
         response_model_by_alias=True,
     )
     def post_update_job_phase(
+        self,
         job_id: str = Path(..., description="Job ID"),
         post_update_job_phase_request: UpdateJobPhaseRequest = Body(None, description="Phase to update"),
     ) -> None:

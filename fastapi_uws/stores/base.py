@@ -1,6 +1,6 @@
 """Base class for storing UWS jobs / results."""
 
-from fastapi_uws.models import JobSummary, Parameters
+from fastapi_uws.models import JobSummary, Parameter
 
 
 class BaseUWSStore:
@@ -28,7 +28,7 @@ class BaseUWSStore:
         """
         raise NotImplementedError
 
-    def add_job(self, parameters: Parameters) -> str:
+    def add_job(self, parameters: list[Parameter]) -> str:
         """Add a job.
 
         Args:

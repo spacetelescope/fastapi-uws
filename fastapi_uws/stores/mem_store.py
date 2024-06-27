@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from fastapi_uws.models import JobSummary
+from fastapi_uws.models import JobSummary, Parameter, Parameters
 from fastapi_uws.models.types import ExecutionPhase
 from fastapi_uws.stores.base import BaseUWSStore
 
@@ -16,7 +16,7 @@ class InMemoryStore(BaseUWSStore):
     Basic in-memory store implementation
     """
 
-    def __init__(self, config, default_expiry=RESULT_EXPIRATION_SEC, max_expiry=MAX_EXPIRATION_TIME):
+    def __init__(self, default_expiry=RESULT_EXPIRATION_SEC, max_expiry=MAX_EXPIRATION_TIME):
         self.data = {}
         self.default_expiry = default_expiry
         self.max_expiry = max_expiry
@@ -40,7 +40,7 @@ class InMemoryStore(BaseUWSStore):
             all_jobs = [job for job in all_jobs if job.owner_id == owner_id]
         return all_jobs
 
-    def add_job(self, parameters, owner_id: str = None, run_id: str = None):
+    def add_job(self, parameters: list[Parameter], owner_id: str = None, run_id: str = None):
         """Add a job to the store"""
         job_id = str(uuid4())
 
@@ -51,6 +51,7 @@ class InMemoryStore(BaseUWSStore):
             phase=ExecutionPhase.PENDING,
             creation_time=datetime.now(timezone.utc),
             destruction=datetime.now(timezone.utc) + timedelta(seconds=self.default_expiry),
+            parameters=Parameters(parameter=parameters),
         )
 
         self.data[job_id] = job

@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from fastapi_uws.models import Parameters
+from fastapi_uws.models import Parameter
 from fastapi_uws.models.types import PhaseAction
 
 
@@ -36,6 +36,6 @@ class UpdateJobRequest(BaseModel):
 class CreateJobRequest(BaseModel):
     """Body of the request to create a new job."""
 
-    parameters: Parameters
+    parameter: list[Parameter]
     owner_id: Optional[str] = Field(default=None, alias="ownerId")
     run_id: Optional[str] = Field(default=None, alias="runId")
