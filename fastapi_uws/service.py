@@ -10,11 +10,9 @@ from pydantic import ValidationError
 
 from fastapi_uws.models import Jobs, Parameters, ShortJobDescription
 from fastapi_uws.models.types import ExecutionPhase, PhaseAction
-from fastapi_uws.stores.base import UWSStore
-from fastapi_uws.worker import UWSWorker
-
-# TODO: Move these to a configuration file
-MAX_WAIT_TIME = 999
+from fastapi_uws.settings import settings
+from fastapi_uws.stores import BaseUWSStore
+from fastapi_uws.workers import BaseUWSWorker
 
 
 def import_string(dotted_path: str):
@@ -28,16 +26,17 @@ def import_string(dotted_path: str):
     return getattr(module, class_name)
 
 
-uws_store = import_string(os.getenv["UWS_STORE"])
-uws_worker = import_string(os.getenv["UWS_WORKER"])
+uws_store = settings.UWS_STORE
+uws_worker = settings.UWS_WORKER
+max_wait_time = settings.MAX_WAIT_TIME
 
 
 class UWSService:
     """Service class implementing the business logic of the application."""
 
     def __init__(self):
-        self.store: UWSStore = uws_store
-        self.worker: UWSWorker = uws_worker
+        self.store: BaseUWSStore = uws_store
+        self.worker: BaseUWSWorker = uws_worker
 
     def get_job_summary(self, job_id: str, phase: ExecutionPhase = None, wait: int = None):
         """Get a job by its ID.

@@ -14,7 +14,9 @@ requires-python = ">=3.11"
 
 dependencies = [
     "fastapi",
-    "fastapi_restful"
+    "fastapi_restful",
+    "pydantic-settings",
+    "typing_inspect"
     ]
 
 classifiers = [
