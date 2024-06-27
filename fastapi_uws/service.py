@@ -8,7 +8,7 @@ from importlib import import_module
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from fastapi_uws.models import Jobs, Parameters, ShortJobDescription
+from fastapi_uws.models import Jobs, Parameter, ShortJobDescription
 from fastapi_uws.models.types import ExecutionPhase, PhaseAction
 from fastapi_uws.settings import settings
 from fastapi_uws.stores import BaseUWSStore
@@ -26,8 +26,8 @@ def import_string(dotted_path: str):
     return getattr(module, class_name)
 
 
-uws_store = settings.UWS_STORE
-uws_worker = settings.UWS_WORKER
+uws_store = import_string(settings.UWS_STORE)()
+uws_worker = import_string(settings.UWS_WORKER)()
 max_wait_time = settings.MAX_WAIT_TIME
 
 
@@ -167,7 +167,7 @@ class UWSService:
         self.store.delete_job(job_id)
         self.worker.cancel(job_id)
 
-    def create_job(self, parameters: Parameters, owner_id: str = None, run_id: str = None):
+    def create_job(self, parameters: list[Parameter], owner_id: str = None, run_id: str = None) -> str:
         """Create a new job.
 
         Args:
