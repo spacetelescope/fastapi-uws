@@ -3,7 +3,7 @@
 from fastapi_uws.models import JobSummary
 
 
-class UWSWorker:
+class BaseUWSWorker:
     """Base UWS worker class."""
 
     def run(self, job: JobSummary) -> None:

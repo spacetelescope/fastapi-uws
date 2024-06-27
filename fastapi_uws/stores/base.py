@@ -1,12 +1,9 @@
 """Base class for storing UWS jobs / results."""
 
-from datetime import datetime
-from typing import Any
-
 from fastapi_uws.models import JobSummary, Parameters
 
 
-class UWSStore:
+class BaseUWSStore:
     """Base class for storing UWS jobs / results."""
 
     def get_job(self, job_id: str) -> JobSummary:
@@ -31,7 +28,7 @@ class UWSStore:
         """
         raise NotImplementedError
 
-    def add_job(self, parameters: Parameters) -> JobSummary.job_id:
+    def add_job(self, parameters: Parameters) -> str:
         """Add a job.
 
         Args:

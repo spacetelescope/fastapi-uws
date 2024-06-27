@@ -5,13 +5,13 @@ from uuid import uuid4
 
 from fastapi_uws.models import JobSummary
 from fastapi_uws.models.types import ExecutionPhase
-from fastapi_uws.stores.base import UWSStore
+from fastapi_uws.stores.base import BaseUWSStore
 
 RESULT_EXPIRATION_SEC = 24 * 60 * 60  # 1 day in seconds
 MAX_EXPIRATION_TIME = RESULT_EXPIRATION_SEC * 3  # the maximum time a job could be updated to
 
 
-class MemoryStore(UWSStore):
+class InMemoryStore(BaseUWSStore):
     """
     Basic in-memory store implementation
     """
