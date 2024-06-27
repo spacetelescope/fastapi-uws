@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Body, Path, Query
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi_restful import cbv
+from fastapi_restful.cbv import cbv
 
 from fastapi_uws.models import ErrorSummary, Jobs, JobSummary, Parameters, Results
 from fastapi_uws.models.types import ExecutionPhase
@@ -21,7 +21,7 @@ uws_service = UWSService()
 
 
 @cbv(uws_router)
-class UWSRouter:
+class UWSAPIRouter:
     """Router for UWS endpoints."""
 
     @uws_router.delete(
