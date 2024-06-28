@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, Path, Query
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi_restful.cbv import cbv
 
 from fastapi_uws.models import ErrorSummary, Jobs, JobSummary, Parameters, Results
@@ -57,7 +57,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
-        return uws_service.get_job_value(job_id, "destruction")
+        return PlainTextResponse(uws_service.get_job_value(job_id, "destruction"))
 
     @uws_router.get(
         "/uws/{job_id}/error",
@@ -129,7 +129,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> str:
-        return uws_service.get_job_value(job_id, "owner_id")
+        return PlainTextResponse(uws_service.get_job_value(job_id, "owner_id"))
 
     @uws_router.get(
         "/uws/{job_id}/parameters",
@@ -163,7 +163,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> ExecutionPhase:
-        return uws_service.get_job_value(job_id, "phase")
+        return PlainTextResponse(uws_service.get_job_value(job_id, "phase"))
 
     @uws_router.get(
         "/uws/{job_id}/quote",
@@ -180,7 +180,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
-        return uws_service.get_job_value(job_id, "quote")
+        return PlainTextResponse(uws_service.get_job_value(job_id, "quote"))
 
     @uws_router.get(
         "/uws/{job_id}/results",
@@ -236,7 +236,7 @@ class UWSAPIRouter:
         parameters = create_job_request.parameter
         owner_id = create_job_request.owner_id
         run_id = create_job_request.run_id
-        job_id = uws_service.create_job(parameters, run_id, owner_id)
+        job_id = uws_service.create_job(parameters, owner_id, run_id)
         return RedirectResponse(status_code=303, url=f"/uws/{job_id}")
 
     @uws_router.post(

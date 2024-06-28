@@ -26,8 +26,8 @@ def import_string(dotted_path: str):
     return getattr(module, class_name)
 
 
-uws_store = import_string(settings.UWS_STORE)()
-uws_worker = import_string(settings.UWS_WORKER)()
+uws_store: BaseUWSStore = import_string(settings.UWS_STORE)()
+uws_worker: BaseUWSWorker = import_string(settings.UWS_WORKER)()
 max_wait_time = settings.MAX_WAIT_TIME
 
 
@@ -103,7 +103,7 @@ class UWSService:
         # sort by creation time
         all_jobs.sort(key=lambda job: job.creation_time, reverse=True)
 
-        job_list = Jobs()
+        job_list = Jobs(jobref=[], version="1.1")
 
         for job in all_jobs:
             # apply filters
@@ -119,12 +119,9 @@ class UWSService:
                     # jobs with the phase "ARCHIVED" should not be returned for backwards compatibility
                     # they should be returned if specifically asked for
                     continue
-            try:
-                job_desc = ShortJobDescription(**job.model_dump())
-                job_list.jobref.append(job_desc)
-            except ValidationError:
-                # Skip values that can't be parsed, e.g. because of model migration
-                pass
+
+            job_desc = ShortJobDescription(**job.model_dump())
+            job_list.jobref.append(job_desc)
 
         # limit by last, if specified
         if last:

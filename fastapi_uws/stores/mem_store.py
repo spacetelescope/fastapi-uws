@@ -50,7 +50,7 @@ class InMemoryStore(BaseUWSStore):
             run_id=run_id,
             phase=ExecutionPhase.PENDING,
             creation_time=datetime.now(timezone.utc),
-            destruction=datetime.now(timezone.utc) + timedelta(seconds=self.default_expiry),
+            destruction_time=datetime.now(timezone.utc) + timedelta(seconds=self.default_expiry),
             parameters=Parameters(parameter=parameters),
         )
 
@@ -70,7 +70,7 @@ class InMemoryStore(BaseUWSStore):
 
         self.data[job.job_id] = job
 
-    def delete(self, job_id):
+    def delete_job(self, job_id):
         """Delete a job from the store."""
         if job_id in self.data:
             del self.data[job_id]

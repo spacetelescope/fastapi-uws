@@ -12,7 +12,7 @@ class BaseUWSWorker:
         Args:
             job: The job to run the worker on.
         """
-        raise NotImplementedError
+        pass
 
     def cancel(self, job: JobSummary) -> None:
         """Cancel the worker on the given job.
@@ -20,4 +20,4 @@ class BaseUWSWorker:
         Args:
             job: The job to cancel the worker on.
         """
-        raise NotImplementedError
+        pass

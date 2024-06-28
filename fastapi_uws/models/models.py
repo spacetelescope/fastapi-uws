@@ -59,16 +59,11 @@ class ShortJobDescription(BaseUWSModel):
     """A short description of a UWS job."""
 
     creation_time: datetime = Field(alias="creationTime", description="The instant at which the job was created.")
-    href: str = Field(description="The URL of the job.")
+    href: Optional[str] = Field(default=None, description="The URL of the job.")
     job_id: str = Field(alias="jobId", description="The identifier for the job.")
     owner_id: Optional[str] = Field(default=None, alias="ownerId", description="The owner (creator) of the job.")
     phase: ExecutionPhase = Field(description="The current phase of the job.")
     run_id: Optional[str] = Field(default=None, alias="runId", description="A client supplied identifier for the job.")
-
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
-        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class JobSummary(BaseUWSModel):
@@ -87,7 +82,7 @@ class JobSummary(BaseUWSModel):
         default=None, alias="endTime", description="The instant at which the job finished execution."
     )
     execution_duration: Optional[int] = Field(
-        default=None,
+        default=0,
         alias="executionDuration",
         description="The duration (in seconds) for which the job should be allowed to run. 0 means unlimited.",
     )
