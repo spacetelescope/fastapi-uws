@@ -229,19 +229,62 @@ class TestUWSAPI:
         quote = resp.text
         assert quote == quote_time
 
+
 class TestJobList:
     """Test fetching and filtering the job list"""
 
     def test_get_job_list(self, client: TestClient):
         """Basic job list get"""
-        
+        pass
+
+    def test_single_phase_filter(self, client: TestClient):
+        """Test filtering by a single phase"""
+        pass
+
+    def test_multiple_phase_filter(self, client: TestClient):
+        """Test filtering by multiple phases"""
+        pass
+
+    def test_last_filter(self, client: TestClient):
+        """Test filtering by last N jobs"""
+        pass
+
+    def test_after_filter(self, client: TestClient):
+        """Test filtering by jobs after a certain time"""
+        pass
+
+    def test_phase_after_filter(self, client: TestClient):
+        """Test filtering by phase and after time"""
+        pass
+
+    def test_phase_last_filter(self, client: TestClient):
+        """Test filtering by phase and last N jobs"""
+        pass
+
+    def test_phase_after_last_filter(self, client: TestClient):
+        """Test filtering by phase, after time, and last N jobs"""
+        pass
 
 
-# get job list
-# job list filtering
-# 404's for the above
-# post update job
-# post update job destruction
-# post update job execution duration
-# post update job phase
-# post update job parameters
+class TestUpdateJob:
+    """Tests updating job properties"""
+
+    def test_post_update_job(self, client: TestClient):
+        """Test updating the /{job} endpoint"""
+        pass
+
+    def test_update_job_destruction(self, client: TestClient):
+        """Test updating the job destruction time"""
+        pass
+
+    def test_update_job_execution_duration(self, client: TestClient):
+        """Test updating the job execution duration"""
+        pass
+
+    def test_update_job_phase(self, client: TestClient):
+        """Test updating the job phase"""
+        pass
+
+    def test_update_job_parameters(self, client: TestClient):
+        """Test updating the job parameters"""
+        pass
