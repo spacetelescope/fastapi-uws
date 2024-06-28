@@ -57,7 +57,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
-        return PlainTextResponse(uws_service.get_job_value(job_id, "destruction"))
+        return PlainTextResponse(uws_service.get_job_value(job_id, "destruction_time").isoformat())
 
     @uws_router.get(
         "/uws/{job_id}/error",

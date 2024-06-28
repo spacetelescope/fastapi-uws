@@ -71,12 +71,12 @@ class TestUWSAPI:
 
         job_id = build_test_job(client)
 
-        resp = client.request("GET", f"/uws/{job_id}")
+        resp = client.request("GET", f"/uws/{job_id}/destruction")
         assert resp.status_code == 200
 
-        job_summary = resp.json()
+        destruction = resp.text
 
-        destruction_time = datetime.fromisoformat(job_summary["destructionTime"])
+        destruction_time = datetime.fromisoformat(destruction)
 
         assert destruction_time > datetime.now(timezone.utc)
 
