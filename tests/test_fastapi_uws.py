@@ -1,5 +1,6 @@
 """Tests for `fastapi_uws` package."""
 
+import os
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -24,6 +25,15 @@ def build_test_job(client: TestClient, owner_id: str = None, run_id: str = None)
     assert response.status_code == 200
     assert response.json()["jobId"] is not None
     return response.json()["jobId"]
+
+
+def assert_id_in_joblist(job_id: str | list[str], job_list: dict):
+    """Check if a job ID is in a job list"""
+    if isinstance(job_id, str):
+        job_id = [job_id]
+
+    for job in job_id:
+        assert job in [job["jobId"] for job in job_list["jobref"]]
 
 
 class TestUWSAPI:
@@ -53,7 +63,7 @@ class TestUWSAPI:
         assert resp.status_code == 200
 
         job_list = resp.json()
-        assert job_id in [job["jobId"] for job in job_list["jobref"]]
+        assert_id_in_joblist(job_id, job_list)
 
         # delete the job
         resp = client.request("DELETE", f"/uws/{job_id}", follow_redirects=False)
@@ -96,7 +106,7 @@ class TestUWSAPI:
         job = JobSummary(**job_summary)
         job.error_summary = ErrorSummary(message="Something went wrong", type="fatal")
 
-        uws_store.update_job(job)
+        uws_store.save_job(job)
 
         # check the error summary
         resp = client.request("GET", f"/uws/{job_id}/error")
@@ -123,7 +133,7 @@ class TestUWSAPI:
         job = JobSummary(**job_summary)
         job.execution_duration = 100
 
-        uws_store.update_job(job)
+        uws_store.save_job(job)
 
         # check the execution duration
         resp = client.request("GET", f"/uws/{job_id}/executionduration")
@@ -187,7 +197,7 @@ class TestUWSAPI:
             ResultReference(id="result2", href="/result2"),
         ]
         job_summary.results = Results(result=result_list)
-        uws_store.update_job(job_summary)
+        uws_store.save_job(job_summary)
 
         # fetch the results
         resp = client.request("GET", f"/uws/{job_id}/results")
@@ -220,7 +230,7 @@ class TestUWSAPI:
 
         job_summary = JobSummary(**job_summary)
         job_summary.quote = quote_time
-        uws_store.update_job(job_summary)
+        uws_store.save_job(job_summary)
 
         # fetch the quote
         resp = client.request("GET", f"/uws/{job_id}/quote")
@@ -235,51 +245,294 @@ class TestJobList:
 
     def test_get_job_list(self, client: TestClient):
         """Basic job list get"""
-        pass
+
+        job_ids = []
+
+        for _ in range(10):
+            job_ids.append(build_test_job(client))
+
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 10
+        assert_id_in_joblist(job_ids, job_list)
 
     def test_single_phase_filter(self, client: TestClient):
         """Test filtering by a single phase"""
-        pass
+
+        pending_job_id = build_test_job(client)
+        running_job_id = build_test_job(client)
+
+        # check both jobs are in the list
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 2
+        assert_id_in_joblist([pending_job_id, running_job_id], job_list)
+
+        # move the running job to the running phase
+        running_job = uws_store.get_job(running_job_id)
+        running_job.phase = "EXECUTING"
+        uws_store.save_job(running_job)
+
+        resp = client.request("GET", "/uws", params={"PHASE": "EXECUTING"})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 1
+        assert_id_in_joblist(running_job_id, job_list)
 
     def test_multiple_phase_filter(self, client: TestClient):
         """Test filtering by multiple phases"""
-        pass
+
+        pending_job_id = build_test_job(client)
+        running_job_id = build_test_job(client)
+        completed_job_id = build_test_job(client)
+
+        # check all jobs are in the list
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 3
+        assert_id_in_joblist([pending_job_id, running_job_id, completed_job_id], job_list)
+
+        # move the running job to the running phase and the completed job to the completed phase
+        running_job = uws_store.get_job(running_job_id)
+        running_job.phase = "EXECUTING"
+        uws_store.save_job(running_job)
+        completed_job = uws_store.get_job(completed_job_id)
+        completed_job.phase = "COMPLETED"
+        uws_store.save_job(completed_job)
+
+        # try querying by executing and completed
+        resp = client.request("GET", "/uws", params={"PHASE": ["EXECUTING", "COMPLETED"]})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+
+        assert len(job_list["jobref"]) == 2
+        assert_id_in_joblist([running_job_id, completed_job_id], job_list)
+
+        # try by pending and completed
+        resp = client.request("GET", "/uws", params={"PHASE": ["PENDING", "COMPLETED"]})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+
+        assert len(job_list["jobref"]) == 2
+        assert_id_in_joblist([pending_job_id, completed_job_id], job_list)
 
     def test_last_filter(self, client: TestClient):
         """Test filtering by last N jobs"""
-        pass
+
+        job_ids = []
+
+        for _ in range(10):
+            job_ids.append(build_test_job(client))
+
+        resp = client.request("GET", "/uws", params={"LAST": 5})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 5
+        for job in job_list["jobref"]:
+            assert job["jobId"] in job_ids[-5:]
+
+        # check that the creationTime order is correct
+        creation_times = [job["creationTime"] for job in job_list["jobref"]]
+        assert creation_times == sorted(creation_times, reverse=True)
 
     def test_after_filter(self, client: TestClient):
         """Test filtering by jobs after a certain time"""
-        pass
+
+        before_filter_id = build_test_job(client)
+
+        time.sleep(1)
+        filter_time = datetime.now(timezone.utc)
+        time.sleep(1)
+
+        after_filter_id = build_test_job(client)
+
+        # check both jobs are in the list
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 2
+        assert_id_in_joblist([before_filter_id, after_filter_id], job_list)
+
+        resp = client.request("GET", "/uws", params={"AFTER": filter_time.isoformat()})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 1
+        assert_id_in_joblist(after_filter_id, job_list)
 
     def test_phase_after_filter(self, client: TestClient):
-        """Test filtering by phase and after time"""
-        pass
+        """Test filtering by phase and after time.
+
+        Per UWS spec, PHASE/AFTER should be combined with AND logic.
+        """
+
+        pending_job_id = build_test_job(client)
+        before_filter_running_id = build_test_job(client)
+
+        time.sleep(1)
+        filter_time = datetime.now(timezone.utc)
+        time.sleep(1)
+
+        after_filter_running_id = build_test_job(client)
+
+        # check all jobs are in the list
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+
+        assert len(job_list["jobref"]) == 3
+        assert_id_in_joblist([pending_job_id, before_filter_running_id, after_filter_running_id], job_list)
+
+        # move the running jobs to the running phase
+        before_filter_running_job = uws_store.get_job(before_filter_running_id)
+        before_filter_running_job.phase = "EXECUTING"
+        uws_store.save_job(before_filter_running_job)
+
+        after_filter_running_job = uws_store.get_job(after_filter_running_id)
+        after_filter_running_job.phase = "EXECUTING"
+        uws_store.save_job(after_filter_running_job)
+
+        # try querying by executing and after filter time
+        resp = client.request(
+            "GET",
+            "/uws",
+            params={"PHASE": "EXECUTING", "AFTER": filter_time.isoformat()},
+        )
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+
+        assert len(job_list["jobref"]) == 1
+        assert_id_in_joblist(after_filter_running_id, job_list)
 
     def test_phase_last_filter(self, client: TestClient):
-        """Test filtering by phase and last N jobs"""
-        pass
+        """Test filtering by phase and last N jobs
 
-    def test_phase_after_last_filter(self, client: TestClient):
-        """Test filtering by phase, after time, and last N jobs"""
-        pass
+        Per UWS spec, LAST should be applied after PHASE/AFTER.
+        """
+
+        # 3 running jobs, 1 pending job
+        # if filtered correctly, we should get the last 2 running jobs, job2 and job3
+        # if LAST is incorrectly applied before PHASE, we would only get job3
+        running_job1 = build_test_job(client)
+        running_job2 = build_test_job(client)
+        pending_job = build_test_job(client)
+        running_job3 = build_test_job(client)
+
+        # move the running jobs to the running phase
+        for job_id in [running_job1, running_job2, running_job3]:
+            job = uws_store.get_job(job_id)
+            job.phase = "EXECUTING"
+            uws_store.save_job(job)
+
+        # check all jobs are in the list
+        resp = client.request("GET", "/uws")
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+        assert len(job_list["jobref"]) == 4
+        assert_id_in_joblist([running_job1, running_job2, pending_job, running_job3], job_list)
+
+        resp = client.request("GET", "/uws", params={"PHASE": "EXECUTING", "LAST": 2})
+        assert resp.status_code == 200
+
+        job_list = resp.json()
+
+        assert len(job_list["jobref"]) == 2
+        assert_id_in_joblist([running_job2, running_job3], job_list)
 
 
 class TestUpdateJob:
     """Tests updating job properties"""
 
     def test_post_update_job(self, client: TestClient):
-        """Test updating the /{job} endpoint"""
-        pass
+        """Test updating the /{job} endpoint via POST
+
+        Clients may update PHASE, DESTRUCTION, and submit an ACTION.
+        """
+
+        # TODO: figure out test worker config
+
+        job_id = build_test_job(client)
+
+        # move the job to the running phase
+        resp = client.request("POST", f"/uws/{job_id}", json={"PHASE": "RUN"}, follow_redirects=False)
+        assert resp.status_code == 303
+
+        # check the phase
+        resp = client.request("GET", f"/uws/{job_id}/phase")
+        assert resp.status_code == 200
+        assert resp.text == "EXECUTING"
 
     def test_update_job_destruction(self, client: TestClient):
         """Test updating the job destruction time"""
-        pass
+
+        job_id = build_test_job(client)
+
+        # get the current destruction time
+        resp = client.request("GET", f"/uws/{job_id}/destruction")
+        assert resp.status_code == 200
+
+        destruction_time = resp.text
+
+        # update the destruction time
+        new_destruction_time = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+        resp = client.request(
+            "POST",
+            f"/uws/{job_id}/destruction",
+            json={"DESTRUCTION": new_destruction_time.isoformat()},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+
+        # check the new destruction time
+        resp = client.request("GET", f"/uws/{job_id}/destruction")
+        assert resp.status_code == 200
+
+        destruction_time = resp.text
+        assert destruction_time == new_destruction_time.isoformat()
 
     def test_update_job_execution_duration(self, client: TestClient):
         """Test updating the job execution duration"""
-        pass
+
+        job_id = build_test_job(client)
+
+        # get the current execution duration
+        resp = client.request("GET", f"/uws/{job_id}/executionduration")
+        assert resp.status_code == 200
+
+        execution_duration = resp.text
+
+        # update the execution duration
+        new_execution_duration = "100"
+
+        resp = client.request(
+            "POST",
+            f"/uws/{job_id}/executionduration",
+            json={"EXECUTIONDURATION": new_execution_duration},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+
+        # check the new execution duration
+        resp = client.request("GET", f"/uws/{job_id}/executionduration")
+        assert resp.status_code == 200
+
+        execution_duration = resp.text
+        assert execution_duration == new_execution_duration
 
     def test_update_job_phase(self, client: TestClient):
         """Test updating the job phase"""
@@ -288,3 +541,7 @@ class TestUpdateJob:
     def test_update_job_parameters(self, client: TestClient):
         """Test updating the job parameters"""
         pass
+
+
+class Test404Responses:
+    """Test accessing non-existent resources"""

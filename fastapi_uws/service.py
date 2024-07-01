@@ -2,8 +2,9 @@
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import import_module
+from typing import Literal
 
 from fastapi import HTTPException
 from pydantic import ValidationError
@@ -178,14 +179,15 @@ class UWSService:
         return job_id
 
     def post_update_job(
-        self, job_id: str, phase: ExecutionPhase = None, destruction: datetime = None, action: PhaseAction = None
+        self, job_id: str, phase: PhaseAction = None, destruction: datetime = None, action: Literal["DELETE"] = None
     ):
         """Update a job.
 
         Args:
             job_id: The ID of the job to update.
-            phase: The new phase of the job.
+            phase: The phase in which to put the job.
             destruction: The new destruction time of the job.
+            action: The action to take on the job. Currently only "DELETE" is supported.
         """
 
         job = self.store.get_job(job_id)
@@ -197,14 +199,37 @@ class UWSService:
             self.delete_job(job_id)
             return None
         if destruction:
-            if destruction < datetime.now():
+            if destruction < datetime.now(timezone.utc):
                 raise HTTPException(400, "Destruction time must be in the future")
             job.destruction_time = destruction
         if phase:
             # Finally, update the phase - we can return right away
-            self.store.update_job(job_id, phase)
+            self.update_job_phase(job_id, phase)
 
         return self.get_job_summary(job_id)
+
+    def update_job_phase(self, job_id: str, phase: PhaseAction):
+        """Update the phase of a job.
+
+        Args:
+            job_id: The ID of the job to update.
+            phase: The new phase of the job.
+        """
+
+        job = self.store.get_job(job_id)
+        if not job:
+            raise HTTPException(404, "Job not found")
+
+        if phase == PhaseAction.RUN:
+            # Only run the job if PENDING or HELD
+            if job.phase in (ExecutionPhase.PENDING, ExecutionPhase.HELD):
+                uws_worker.run(job)
+        elif phase == PhaseAction.ABORT:
+            uws_worker.cancel(job)
+            job.phase = ExecutionPhase.ABORTED
+            self.store.save_job(job)
+        else:
+            return HTTPException(501, "Phase not supported.")
 
     def update_job_value(self, job_id: str, value: str, new_value):
         """Update a value of a job.
@@ -220,4 +245,4 @@ class UWSService:
             raise HTTPException(404, "Job not found")
 
         setattr(job, value, new_value)
-        self.store.update_job(job)
+        self.store.save_job(job)

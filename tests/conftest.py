@@ -12,9 +12,6 @@ def app() -> FastAPI:
     app = FastAPI()
     app.include_router(uws_router)
 
-    os.environ["UWS_STORE"] = "fastapi_uws.stores.InMemoryStore"
-    os.environ["UWS_WORKER"] = "fastapi_uws.workers.BaseUWSWorker"
-
     return app
 
 

@@ -58,7 +58,7 @@ class InMemoryStore(BaseUWSStore):
 
         return job_id
 
-    def update_job(self, job: JobSummary):
+    def save_job(self, job: JobSummary):
         """Update a job in the store."""
 
         creation_time = job.creation_time

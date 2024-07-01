@@ -259,7 +259,11 @@ class UWSAPIRouter:
         destruction = update_job_request.destruction
         action = update_job_request.action
 
-        return uws_service.post_update_job(job_id, phase, destruction, action)
+        uws_service.post_update_job(job_id, phase, destruction, action)
+
+        if action == "DELETE":
+            return RedirectResponse(status_code=303, url="/uws/")
+        return RedirectResponse(status_code=303, url=f"/uws/{job_id}")
 
     @uws_router.post(
         "/uws/{job_id}/destruction",
@@ -279,7 +283,7 @@ class UWSAPIRouter:
             None, description="Destruction time to update"
         ),
     ) -> None:
-        uws_service.update_job_value(job_id, "destruction", post_update_job_destruction_request.destruction)
+        uws_service.update_job_value(job_id, "destruction_time", post_update_job_destruction_request.destruction)
         return RedirectResponse(status_code=303, url=f"/uws/{job_id}")
 
     @uws_router.post(

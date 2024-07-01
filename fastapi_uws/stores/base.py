@@ -36,7 +36,7 @@ class BaseUWSStore:
         """
         raise NotImplementedError
 
-    def update_job(self, job: JobSummary) -> None:
+    def save_job(self, job: JobSummary) -> None:
         """Update a job.
 
         Args:
