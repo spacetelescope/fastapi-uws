@@ -1,35 +1,16 @@
 """Module implementing the service layer of the application."""
 
-import os
 import time
 from datetime import datetime, timezone
-from importlib import import_module
 from typing import Literal
 
 from fastapi import HTTPException
-from pydantic import ValidationError
 
 from fastapi_uws.models import Jobs, Parameter, ShortJobDescription
 from fastapi_uws.models.types import ExecutionPhase, PhaseAction
-from fastapi_uws.settings import settings
+from fastapi_uws.settings import uws_store, uws_worker
 from fastapi_uws.stores import BaseUWSStore
 from fastapi_uws.workers import BaseUWSWorker
-
-
-def import_string(dotted_path: str):
-    """Import a class or function from a dotted path string.
-
-    Args:
-        dotted_path: The dotted path to the class or function to import.
-    """
-    module_path, class_name = dotted_path.rsplit(".", 1)
-    module = import_module(module_path)
-    return getattr(module, class_name)
-
-
-uws_store: BaseUWSStore = import_string(settings.UWS_STORE)()
-uws_worker: BaseUWSWorker = import_string(settings.UWS_WORKER)()
-max_wait_time = settings.MAX_WAIT_TIME
 
 
 class UWSService:
