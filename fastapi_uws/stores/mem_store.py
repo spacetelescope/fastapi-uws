@@ -5,10 +5,8 @@ from uuid import uuid4
 
 from fastapi_uws.models import JobSummary, Parameter, Parameters
 from fastapi_uws.models.types import ExecutionPhase
+from fastapi_uws.settings import app_settings
 from fastapi_uws.stores.base import BaseUWSStore
-
-RESULT_EXPIRATION_SEC = 24 * 60 * 60  # 1 day in seconds
-MAX_EXPIRATION_TIME = RESULT_EXPIRATION_SEC * 3  # the maximum time a job could be updated to
 
 
 class InMemoryStore(BaseUWSStore):
@@ -16,10 +14,10 @@ class InMemoryStore(BaseUWSStore):
     Basic in-memory store implementation
     """
 
-    def __init__(self, default_expiry=RESULT_EXPIRATION_SEC, max_expiry=MAX_EXPIRATION_TIME):
+    def __init__(self):
         self.data = {}
-        self.default_expiry = default_expiry
-        self.max_expiry = max_expiry
+        self.default_expiry = app_settings.store.DEFAULT_EXPIRY
+        self.max_expiry = app_settings.store.MAX_EXPIRY
 
     def get_job(self, job_id):
         """Get a job by its ID."""
@@ -29,15 +27,13 @@ class InMemoryStore(BaseUWSStore):
 
         destruction = job.destruction_time
         if destruction and destruction < current_time:
-            self.delete(job_id)
+            self.delete_job(job_id)
 
         return self.data.get(job_id)
 
-    def get_jobs(self, owner_id=None):
-        """Get all jobs. Optionally filter by owner_id."""
+    def get_jobs(self):
+        """Get all jobs."""
         all_jobs: list[JobSummary] = list(self.data.values())
-        if owner_id:
-            all_jobs = [job for job in all_jobs if job.owner_id == owner_id]
         return all_jobs
 
     def add_job(self, parameters: list[Parameter], owner_id: str = None, run_id: str = None):

@@ -160,7 +160,11 @@ class UWSService:
         return job_id
 
     def post_update_job(
-        self, job_id: str, phase: PhaseAction = None, destruction: datetime = None, action: Literal["DELETE"] = None
+        self,
+        job_id: str,
+        phase: PhaseAction = None,
+        destruction: datetime = None,
+        action: Literal["DELETE"] = None,
     ):
         """Update a job.
 
@@ -204,9 +208,9 @@ class UWSService:
         if phase == PhaseAction.RUN:
             # Only run the job if PENDING or HELD
             if job.phase in (ExecutionPhase.PENDING, ExecutionPhase.HELD):
-                uws_worker.run(job)
+                self.worker.run(job)
         elif phase == PhaseAction.ABORT:
-            uws_worker.cancel(job)
+            self.worker.cancel(job)
             job.phase = ExecutionPhase.ABORTED
             self.store.save_job(job)
         else:

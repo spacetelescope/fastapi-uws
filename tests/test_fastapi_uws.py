@@ -206,7 +206,7 @@ class TestUWSAPI:
 
         results = resp.json()
 
-        assert results["result"] != None
+        assert results["result"] is not None
         assert len(results["result"]) == 2
 
         assert results["result"][0]["id"] == "result1"
@@ -244,7 +244,7 @@ class TestUWSAPI:
 class TestJobList:
     """Test fetching and filtering the job list"""
 
-    def test_get_job_list(self, client: TestClient):
+    def test_get_job_list(self, client: TestClient, store: BaseUWSStore):
         """Basic job list get"""
 
         job_ids = []

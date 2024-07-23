@@ -1,4 +1,5 @@
 from importlib import import_module
+from typing import Annotated
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -40,8 +41,8 @@ class WorkerSettings(BaseSettings):
 class Settings(BaseSettings):
     """Settings for the application."""
 
-    worker: WorkerSettings = Field(default_factory=WorkerSettings)
-    store: StoreSettings = Field(default_factory=StoreSettings)
+    worker: Annotated[WorkerSettings, Field(default_factory=WorkerSettings)]
+    store: Annotated[StoreSettings, Field(default_factory=StoreSettings)]
 
 
 def import_string(dotted_path: str):
@@ -65,7 +66,7 @@ def get_store_instance() -> BaseUWSStore:
     """Get an instance of the configured UWS store."""
     global _store_instance
     if _store_instance is None:
-        store_class = import_string(app_settings.store.CLASS)  # pylint: disable=no-member
+        store_class = import_string(app_settings.store.CLASS)
         _store_instance = store_class()
     return _store_instance
 
@@ -74,7 +75,7 @@ def get_worker_instance() -> BaseUWSWorker:
     """Get an instance of the configured UWS worker."""
     global _worker_instance
     if _worker_instance is None:
-        worker_class = import_string(app_settings.worker.CLASS)  # pylint: disable=no-member
+        worker_class = import_string(app_settings.worker.CLASS)
         _worker_instance = worker_class()
     return _worker_instance
 
