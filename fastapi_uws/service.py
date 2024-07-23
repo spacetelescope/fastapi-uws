@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from fastapi_uws.models import Jobs, Parameter, ShortJobDescription
 from fastapi_uws.models.types import ExecutionPhase, PhaseAction
-from fastapi_uws.settings import uws_store, uws_worker
+from fastapi_uws.settings import get_store_instance, get_worker_instance
 from fastapi_uws.stores import BaseUWSStore
 from fastapi_uws.workers import BaseUWSWorker
 
@@ -17,8 +17,8 @@ class UWSService:
     """Service class implementing the business logic of the application."""
 
     def __init__(self):
-        self.store: BaseUWSStore = uws_store
-        self.worker: BaseUWSWorker = uws_worker
+        self.store: BaseUWSStore = get_store_instance()
+        self.worker: BaseUWSWorker = get_worker_instance()
 
     def get_job_summary(self, job_id: str, phase: ExecutionPhase = None, wait: int = None):
         """Get a job by its ID.
