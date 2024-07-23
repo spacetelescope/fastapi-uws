@@ -57,7 +57,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
-        return PlainTextResponse(uws_service.get_job_value(job_id, "destruction_time").isoformat())
+        return PlainTextResponse(uws_service.get_job_detail(job_id, "destruction_time").isoformat())
 
     @uws_router.get(
         "/uws/{job_id}/error",
@@ -74,7 +74,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> ErrorSummary:
-        return uws_service.get_job_value(job_id, "error_summary")
+        return uws_service.get_job_detail(job_id, "error_summary")
 
     @uws_router.get(
         "/uws/{job_id}/executionduration",
@@ -91,7 +91,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> int:
-        return uws_service.get_job_value(job_id, "execution_duration")
+        return uws_service.get_job_detail(job_id, "execution_duration")
 
     @uws_router.get(
         "/uws/",
@@ -129,7 +129,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> str:
-        return PlainTextResponse(uws_service.get_job_value(job_id, "owner_id"))
+        return PlainTextResponse(uws_service.get_job_detail(job_id, "owner_id"))
 
     @uws_router.get(
         "/uws/{job_id}/parameters",
@@ -146,7 +146,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> Parameters:
-        return uws_service.get_job_value(job_id, "parameters")
+        return uws_service.get_job_detail(job_id, "parameters")
 
     @uws_router.get(
         "/uws/{job_id}/phase",
@@ -163,7 +163,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> ExecutionPhase:
-        return PlainTextResponse(uws_service.get_job_value(job_id, "phase"))
+        return PlainTextResponse(uws_service.get_job_detail(job_id, "phase"))
 
     @uws_router.get(
         "/uws/{job_id}/quote",
@@ -180,7 +180,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> datetime:
-        return PlainTextResponse(uws_service.get_job_value(job_id, "quote"))
+        return PlainTextResponse(uws_service.get_job_detail(job_id, "quote"))
 
     @uws_router.get(
         "/uws/{job_id}/results",
@@ -197,7 +197,7 @@ class UWSAPIRouter:
         self,
         job_id: str = Path(..., description="Job ID"),
     ) -> Results:
-        return uws_service.get_job_value(job_id, "results")
+        return uws_service.get_job_detail(job_id, "results")
 
     @uws_router.get(
         "/uws/{job_id}",

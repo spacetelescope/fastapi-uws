@@ -130,8 +130,8 @@ class UWSService:
 
         return job_list
 
-    def get_job_value(self, job_id: str, value: str):
-        """Return one of the elements of the job summary.
+    def get_job_detail(self, job_id: str, value: str):
+        """Return one of the detail elements of the job summary.
 
         Args:
             job_id: The ID of the job to get.
@@ -146,7 +146,7 @@ class UWSService:
         try:
             return getattr(job, value)
         except AttributeError:
-            raise HTTPException(400, f"Job value {value} not found")
+            raise HTTPException(400, f"Job detail {value} not found")
 
     def delete_job(self, job_id):
         """Delete a job by its ID.
