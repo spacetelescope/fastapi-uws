@@ -13,11 +13,10 @@ EXPIRY_DAY = 86400  # 1 day in seconds
 class StoreSettings(BaseSettings):
     """Settings for the UWS store."""
 
-    CLASS: str = Field("fastapi_uws.stores.InMemoryStore", description="The class to use for the UWS store.")
-    DEFAULT_EXPIRY: int = Field(
+    default_expiry: int = Field(
         EXPIRY_DAY * 3, description="The default expiry time for jobs and results in the store in seconds."
     )
-    MAX_EXPIRY: int = Field(
+    max_expiry: int = Field(
         EXPIRY_DAY * 7, description="The maximum expiry time for jobs and results in the store in seconds."
     )
 
@@ -30,8 +29,6 @@ class StoreSettings(BaseSettings):
 class WorkerSettings(BaseSettings):
     """Settings for the UWS worker."""
 
-    CLASS: str = Field("fastapi_uws.workers.BaseUWSWorker", description="The class to use for the UWS worker.")
-
     model_config = SettingsConfigDict(
         description="The configuration for the UWS worker.",
         env_prefix="UWS_WORKER_",
@@ -41,8 +38,19 @@ class WorkerSettings(BaseSettings):
 class Settings(BaseSettings):
     """Settings for the application."""
 
-    worker: Annotated[WorkerSettings, Field(default_factory=WorkerSettings)]
-    store: Annotated[StoreSettings, Field(default_factory=StoreSettings)]
+    store_class: str = Field(
+        "fastapi_uws.stores.mem_store.InMemoryStore", description="The class to use for the UWS store."
+    )
+    worker_class: str = Field("fastapi_uws.workers.BaseUWSWorker", description="The class to use for the UWS worker.")
+
+    worker_settings: Annotated[WorkerSettings, Field(default_factory=WorkerSettings)]
+    store_settings: Annotated[StoreSettings, Field(default_factory=StoreSettings)]
+
+    model_config = SettingsConfigDict(
+        description="The configuration for the application.",
+        env_prefix="UWS_",
+        cli_parse_args=True,
+    )
 
 
 def import_string(dotted_path: str):
@@ -66,8 +74,9 @@ def get_store_instance() -> BaseUWSStore:
     """Get an instance of the configured UWS store."""
     global _store_instance
     if _store_instance is None:
-        store_class = import_string(app_settings.store.CLASS)
-        _store_instance = store_class()
+        store_class = import_string(app_settings.store_class)
+        store_settings = app_settings.store_settings.model_dump()
+        _store_instance = store_class(**store_settings)
     return _store_instance
 
 
@@ -75,7 +84,7 @@ def get_worker_instance() -> BaseUWSWorker:
     """Get an instance of the configured UWS worker."""
     global _worker_instance
     if _worker_instance is None:
-        worker_class = import_string(app_settings.worker.CLASS)
+        worker_class = import_string(app_settings.worker_class)
         _worker_instance = worker_class()
     return _worker_instance
 
