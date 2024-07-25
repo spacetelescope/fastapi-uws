@@ -28,7 +28,7 @@ class BaseUWSStore:
         """
         raise NotImplementedError
 
-    def add_job(self, parameters: list[Parameter]) -> str:
+    def add_job(self, parameters: list[Parameter], owner_id: str = None, run_id: str = None) -> str:
         """Add a job.
 
         Args:
