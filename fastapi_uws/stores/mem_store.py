@@ -5,8 +5,10 @@ from uuid import uuid4
 
 from fastapi_uws.models import JobSummary, Parameter, Parameters
 from fastapi_uws.models.types import ExecutionPhase
-from fastapi_uws.settings import app_settings
 from fastapi_uws.stores.base import BaseUWSStore
+
+RESULT_EXPIRATION_SEC = 24 * 60 * 60  # 1 day in seconds
+MAX_EXPIRATION_TIME = RESULT_EXPIRATION_SEC * 3  # the maximum time a job could be updated to
 
 
 class InMemoryStore(BaseUWSStore):
@@ -14,10 +16,10 @@ class InMemoryStore(BaseUWSStore):
     Basic in-memory store implementation
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.data = {}
-        self.default_expiry = app_settings.store.DEFAULT_EXPIRY
-        self.max_expiry = app_settings.store.MAX_EXPIRY
+        self.default_expiry = kwargs.get("default_expiry", RESULT_EXPIRATION_SEC)
+        self.max_expiry = kwargs.get("max_expiry", MAX_EXPIRATION_TIME)
 
     def get_job(self, job_id):
         """Get a job by its ID."""
