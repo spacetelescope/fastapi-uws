@@ -10,11 +10,12 @@ authors = [
 ]
 description = "FastAPI implementation of the IVOA UWS pattern"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 
 dependencies = [
-    "fastapi",
-    "fastapi_restful",
+    "fastapi==0.103",
+    "pydantic<2.6",
+    "fastapi_restful<=0.5.0",
     "pydantic-settings",
     "typing_inspect"
     ]
